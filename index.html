@@ -144,8 +144,6 @@
         <a href="#projects">Projects</a>
         <a href="#experience">Experience</a>
         <a href="#contact">Contact</a>
-        <a href="/projects">All Projects</a>
-        <a href="/about">About Page</a>
         <a class="icon-btn" href="https://github.com/malumohit" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.31 1.23a11.5 11.5 0 0 1 6.02 0c2.3-1.55 3.31-1.23 3.31-1.23.66 1.65.24 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z"/></svg>
         </a>
@@ -330,11 +328,7 @@
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 
   <script>
-  // Initialize particles.js and AOS (with reduced-motion support)
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // particles.js (light motion if allowed)
-  if (!prefersReduced) {
+    // Initialize particles.js (lightweight subtle background)
     particlesJS('particles', {
       particles:{number:{value:60,density:{enable:true,value_area:800}},
         color:{value:'#38bdf8'},shape:{type:'circle'},opacity:{value:0.25},
@@ -343,20 +337,30 @@
       interactivity:{detect_on:'canvas', events:{onhover:{enable:false},onclick:{enable:false}}, modes:{}},
       retina_detect:true
     });
-  } else {
-    const p = document.getElementById('particles'); if (p) p.style.display = 'none';
-  }
 
-  // AOS scroll animations (disable or shorten when reduced motion)
-  AOS.init({
-    once: true,
-    duration: prefersReduced ? 0 : 600,
-    offset: prefersReduced ? 0 : 80,
-    easing: 'ease-out',
-    disable: prefersReduced
-  });
-</script>
+    // AOS scroll animations
+    AOS.init({ once:true, duration:600, offset:80, easing:'ease-out' });
 
+    // Chart.js skills bar (replace with your own values)
+    const ctx = document.getElementById('skillsChart');
+    if(ctx){
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Python','SQL','Spark','AWS','scikit-learn','Tableau'],
+          datasets: [{
+            label: 'Proficiency',
+            data: [95, 90, 85, 85, 88, 75]
+          }]
+        },
+        options: {
+          responsive:true,
+          maintainAspectRatio:false,
+          scales:{ y:{ beginAtZero:true, max:100, ticks:{ stepSize:20 } } }
+        }
+      });
+    }
+  </script>
 
   </body>
 </html>
