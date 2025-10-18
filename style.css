@@ -1,0 +1,75 @@
+body {
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  margin: 0;
+  background: #f9fafc;
+  color: #333;
+  line-height: 1.6;
+}
+
+header {
+  text-align: center;
+  background: linear-gradient(135deg, #0077b6, #00b4d8);
+  color: #fff;
+  padding: 3rem 1rem;
+}
+
+header span {
+  color: #ffd166;
+}
+
+.btn {
+  display: inline-block;
+  margin-top: 1rem;
+  background: #ffd166;
+  color: #333;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #ffe07a;
+}
+
+section {
+  padding: 2rem 10%;
+}
+
+h2 {
+  color: #0077b6;
+  border-bottom: 2px solid #00b4d8;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.project {
+  background: white;
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.project a {
+  color: #00b4d8;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul li {
+  margin: 0.3rem 0;
+}
+
+footer {
+  text-align: center;
+  background: #e0e0e0;
+  padding: 1rem;
+  margin-top: 2rem;
+}
