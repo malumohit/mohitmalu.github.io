@@ -123,6 +123,8 @@
         <a href="#projects">Projects</a>
         <a href="#experience">Experience</a>
         <a href="#contact">Contact</a>
+        <a href="/projects">All Projects</a>
+        <a href="/about">About Page</a>
         <button class="theme-toggle" id="toggleTheme" aria-label="Toggle dark mode">🌙</button>
       </div>
     </div>
@@ -270,6 +272,10 @@
 
     // Year
     document.getElementById('year').textContent = new Date().getFullYear();
+      // Point all project links to GitHub profile
+    document.querySelectorAll('#projects .card a').forEach(a => {
+      a.href = 'https://github.com/malumohit';
+    });
   </script>
 </body>
 </html>
