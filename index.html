@@ -6,6 +6,13 @@
   <title>Mohit Malu | Data Scientist & Data Engineer</title>
   <meta name="description" content="Portfolio of Mohit Malu — Data Scientist & Data Engineer. Projects in ML, Big Data, and cloud (AWS)." />
   <meta name="theme-color" content="#0ea5e9" />
+  <!-- SEO / Social -->
+  <meta property="og:title" content="Mohit Malu | Data Scientist & Data Engineer" />
+  <meta property="og:description" content="Projects in ML, Big Data, and AWS. View work, resume, and contact." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="images/mohit.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="images/mohit.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -114,6 +121,11 @@
     .icon-btn svg{width:20px;height:20px;fill:currentColor}
     .badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:rgba(148,163,184,.12);margin-right:8px;border:1px solid rgba(148,163,184,.2)}
     .badge i{font-size:16px;margin:0}
+      /* ====== Smooth theme transitions ====== */
+    body, .panel, .card, .chip { transition: background-color .35s ease, color .35s ease, border-color .35s ease; }
+
+    /* ====== Particles background ====== */
+    #particles{position:absolute;inset:0;pointer-events:none;opacity:.4}
   </style>
   <!-- Devicon icon font for tech logos -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.15.1/devicon.min.css">
@@ -147,6 +159,7 @@
 
   <!-- Hero -->
   <header id="top" class="hero">
+    <div id="particles"></div>
     <div class="hero-inner">
       <div>
         <div class="hello">👋 Hi, I’m</div>
@@ -164,13 +177,13 @@
   </header>
 
   <!-- About -->
-  <section id="about" data-appear>
+  <section id="about" data-appear data-aos="fade-up">
     <h2 class="section-title"><span class="bar"></span>About Me</h2>
     <p class="muted">I design scalable data pipelines and machine learning systems to uncover insights from large datasets. I completed a Master’s in Management Information Systems at San Diego State University, focusing on data systems, analytics, and information security.</p>
   </section>
 
   <!-- Skills -->
-  <section id="skills" data-appear>
+  <section id="skills" data-appear data-aos="fade-up">
     <h2 class="section-title"><span class="bar"></span>Technical Skills</h2>
     <div class="chips">
       <span class="chip"><span class="badge"><i class="devicon-python-plain"></i></span>Python</span>
@@ -193,10 +206,14 @@
       <span class="chip"><span class="badge"><i class="devicon-jupyter-plain"></i></span>Jupyter</span>
       <span class="chip"><span class="badge"><i class="devicon-vscode-plain"></i></span>VS Code</span>
     </div>
+
+    <div style="height:220px;margin-top:18px" data-aos="fade-up">
+      <canvas id="skillsChart"></canvas>
+    </div>
   </section>
 
   <!-- Projects -->
-  <section id="projects" data-appear>
+  <section id="projects" data-appear data-aos="fade-up">
     <h2 class="section-title"><span class="bar"></span>Highlighted Projects</h2>
     <div class="grid">
       <article class="card">
@@ -223,7 +240,7 @@
   </section>
 
   <!-- Experience (Timeline) -->
-  <section id="experience" data-appear>
+  <section id="experience" data-appear data-aos="fade-up">
     <h2 class="section-title"><span class="bar"></span>Professional Experience</h2>
     <div class="timeline">
       <div class="item">
@@ -244,7 +261,7 @@
   </section>
 
   <!-- Contact -->
-  <section id="contact" data-appear>
+  <section id="contact" data-appear data-aos="fade-up">
     <h2 class="section-title"><span class="bar"></span>Contact</h2>
     <div class="contact">
       <div class="panel">
@@ -260,8 +277,10 @@
           </a>
         </div>
       </div>
-      <form class="panel form" name="contact" netlify>
+      <form class="panel form" name="contact" netlify netlify-honeypot="bot-field">
         <h3 style="margin-top:0">Quick Message</h3>
+        <input type="hidden" name="form-name" value="contact" />
+        <p class="sr">If you are a human, leave this field blank:<input name="bot-field" /></p>
         <input type="hidden" name="form-name" value="contact" />
         <label class="sr" for="name">Name</label>
         <input id="name" name="name" placeholder="Your name" required />
@@ -269,6 +288,7 @@
         <input id="email" type="email" name="email" placeholder="name@example.com" required />
         <label class="sr" for="msg">Message</label>
         <textarea id="msg" name="message" rows="4" placeholder="How can I help?" required></textarea>
+        <div data-netlify-recaptcha="true"></div>
         <button class="btn primary" type="submit">Send Message</button>
       </form>
     </div>
@@ -304,5 +324,50 @@
       a.href = 'https://github.com/malumohit';
     });
   </script>
-</body>
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+  <script>
+    // Initialize particles.js (lightweight subtle background)
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!prefersReduced){
+      particlesJS('particles', {
+        particles:{number:{value:60,density:{enable:true,value_area:800}},
+          color:{value:'#38bdf8'},shape:{type:'circle'},opacity:{value:0.25},
+          size:{value:2, random:true}, line_linked:{enable:true, distance:140, color:'#22d3ee', opacity:0.2, width:1},
+          move:{enable:true, speed:1, direction:'none', out_mode:'out'}},
+        interactivity:{detect_on:'canvas', events:{onhover:{enable:false},onclick:{enable:false}}, modes:{}},
+        retina_detect:true
+      });
+    } else {
+      const p = document.getElementById('particles'); if(p) p.style.display = 'none';
+    }
+
+    // AOS scroll animations
+    AOS.init({ once:true, duration:prefersReduced ? 0 : 600, offset:prefersReduced ? 0 : 80, easing:'ease-out', disable: prefersReduced });
+
+    // Chart.js skills bar (replace with your own values)
+    const ctx = document.getElementById('skillsChart');
+    if(ctx){
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Python','SQL','Spark','AWS','scikit-learn','Tableau'],
+          datasets: [{
+            label: 'Proficiency',
+            data: [95, 90, 85, 85, 88, 75]
+          }]
+        },
+        options: {
+          responsive:true,
+          maintainAspectRatio:false,
+          scales:{ y:{ beginAtZero:true, max:100, ticks:{ stepSize:20 } } }
+        }
+      });
+    }
+  </script>
+
+  </body>
 </html>
