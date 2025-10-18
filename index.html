@@ -53,7 +53,7 @@
       radial-gradient(120px 200px at 20% 0%, rgba(148,163,184,.25), transparent),
       linear-gradient(135deg,var(--brand),var(--brand-2));
       box-shadow:var(--shadow);position:relative;overflow:hidden}
-    .avatar::after{content:"";position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800&auto=format&fit=crop') center/cover;mix-blend-mode:overlay;opacity:.65}
+    img.avatar{object-fit:cover;object-position:center;display:block}
 
     /* ====== Sections ====== */
     section{max-width:1100px;margin:0 auto;padding:56px 16px}
@@ -141,7 +141,7 @@
         </div>
       </div>
       <div class="avatar-wrap">
-        <div class="avatar" aria-hidden="true"></div>
+        <img class="avatar" src="images/mohit.jpg" alt="Portrait of Mohit Malu" loading="lazy" />
       </div>
     </div>
   </header>
@@ -182,21 +182,21 @@
         <div class="tag">Big Data • ML</div>
         <h3>🧠 Mental Health Attitude Across Geography</h3>
         <p>Distributed pipeline analyzing geographic + workplace factors in mental health. Feature engineered regional signals; models explained variance across cohorts. 🥉 in course competition.</p>
-        <a href="https://github.com/mohitmalu/mental-health-geo" target="_blank" rel="noopener">View Project →</a>
+        <a href="https://github.com/malumohit/mental-health-geo" target="_blank" rel="noopener">View Project →</a>
       </article>
 
       <article class="card">
         <div class="tag">Time‑Series • AWS</div>
         <h3>⚙️ Predictive Maintenance (PI Controller Logs)</h3>
         <p>Built predictive maintenance model on Honeywell controller logs. Ingested via S3; surfaced real‑time fault dashboards in Tableau.</p>
-        <a href="https://github.com/mohitmalu/predictive-maintenance" target="_blank" rel="noopener">View Project →</a>
+        <a href="https://github.com/malumohit/predictive-maintenance" target="_blank" rel="noopener">View Project →</a>
       </article>
 
       <article class="card">
         <div class="tag">ETL • Scraping</div>
         <h3>🎬 Movie Data Scraper</h3>
         <p>Python scraper extracting top‑movie data with persistence to CSV + SQLite. Demonstrates clean ETL patterns and wrangling.</p>
-        <a href="https://github.com/mohitmalu/movie-scraper" target="_blank" rel="noopener">View Project →</a>
+        <a href="https://github.com/malumohit/movie-scraper" target="_blank" rel="noopener">View Project →</a>
       </article>
     </div>
   </section>
@@ -229,7 +229,7 @@
       <div class="panel">
         <p>📍 San Diego, CA</p>
         <p>📧 <a href="mailto:mmalu9864@sdsu.edu">mmalu9864@sdsu.edu</a></p>
-        <p>🔗 <a href="https://www.linkedin.com/in/mohit-malu/" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/mohitmalu" target="_blank" rel="noopener">GitHub</a></p>
+        <p>🔗 <a href="https://www.linkedin.com/in/mohit-malu/" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/malumohit" target="_blank" rel="noopener">GitHub</a></p>
       </div>
       <form class="panel form" name="contact" netlify>
         <h3 style="margin-top:0">Quick Message</h3>
