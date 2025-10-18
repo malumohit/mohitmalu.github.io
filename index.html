@@ -330,44 +330,33 @@
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 
   <script>
-    // Initialize particles.js (lightweight subtle background)
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(!prefersReduced){
-      particlesJS('particles', {
-        particles:{number:{value:60,density:{enable:true,value_area:800}},
-          color:{value:'#38bdf8'},shape:{type:'circle'},opacity:{value:0.25},
-          size:{value:2, random:true}, line_linked:{enable:true, distance:140, color:'#22d3ee', opacity:0.2, width:1},
-          move:{enable:true, speed:1, direction:'none', out_mode:'out'}},
-        interactivity:{detect_on:'canvas', events:{onhover:{enable:false},onclick:{enable:false}}, modes:{}},
-        retina_detect:true
-      });
-    } else {
-      const p = document.getElementById('particles'); if(p) p.style.display = 'none';
-    }
+  // Initialize particles.js and AOS (with reduced-motion support)
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // AOS scroll animations
-    AOS.init({ once:true, duration:prefersReduced ? 0 : 600, offset:prefersReduced ? 0 : 80, easing:'ease-out', disable: prefersReduced });
+  // particles.js (light motion if allowed)
+  if (!prefersReduced) {
+    particlesJS('particles', {
+      particles:{number:{value:60,density:{enable:true,value_area:800}},
+        color:{value:'#38bdf8'},shape:{type:'circle'},opacity:{value:0.25},
+        size:{value:2, random:true}, line_linked:{enable:true, distance:140, color:'#22d3ee', opacity:0.2, width:1},
+        move:{enable:true, speed:1, direction:'none', out_mode:'out'}},
+      interactivity:{detect_on:'canvas', events:{onhover:{enable:false},onclick:{enable:false}}, modes:{}},
+      retina_detect:true
+    });
+  } else {
+    const p = document.getElementById('particles'); if (p) p.style.display = 'none';
+  }
 
-    // Chart.js skills bar (replace with your own values)
-    const ctx = document.getElementById('skillsChart');
-    if(ctx){
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Python','SQL','Spark','AWS','scikit-learn','Tableau'],
-          datasets: [{
-            label: 'Proficiency',
-            data: [95, 90, 85, 85, 88, 75]
-          }]
-        },
-        options: {
-          responsive:true,
-          maintainAspectRatio:false,
-          scales:{ y:{ beginAtZero:true, max:100, ticks:{ stepSize:20 } } }
-        }
-      });
-    }
-  </script>
+  // AOS scroll animations (disable or shorten when reduced motion)
+  AOS.init({
+    once: true,
+    duration: prefersReduced ? 0 : 600,
+    offset: prefersReduced ? 0 : 80,
+    easing: 'ease-out',
+    disable: prefersReduced
+  });
+</script>
+
 
   </body>
 </html>
