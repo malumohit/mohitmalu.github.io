@@ -112,6 +112,8 @@
     .social{display:flex;gap:10px;align-items:center;margin-top:8px}
     .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.06);box-shadow:var(--shadow);text-decoration:none}
     .icon-btn svg{width:20px;height:20px;fill:currentColor}
+    .badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:rgba(148,163,184,.12);margin-right:8px;border:1px solid rgba(148,163,184,.2)}
+    .badge i{font-size:16px;margin:0}
   </style>
   <!-- Devicon icon font for tech logos -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.15.1/devicon.min.css">
@@ -132,6 +134,12 @@
         <a href="#contact">Contact</a>
         <a href="/projects">All Projects</a>
         <a href="/about">About Page</a>
+        <a class="icon-btn" href="https://github.com/malumohit" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.31 1.23a11.5 11.5 0 0 1 6.02 0c2.3-1.55 3.31-1.23 3.31-1.23.66 1.65.24 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z"/></svg>
+        </a>
+        <a class="icon-btn" href="https://www.linkedin.com/in/mohit-malu/" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V24h-4V8zM8 8h3.8v2.2h.06c.53-1 1.84-2.2 3.8-2.2C20.42 8 22 10.2 22 14.12V24h-4v-8.6c0-2.05-.04-4.7-2.86-4.7-2.86 0-3.3 2.23-3.3 4.55V24H8V8z"/></svg>
+        </a>
         <button class="theme-toggle" id="toggleTheme" aria-label="Toggle dark mode">🌙</button>
       </div>
     </div>
@@ -165,21 +173,25 @@
   <section id="skills" data-appear>
     <h2 class="section-title"><span class="bar"></span>Technical Skills</h2>
     <div class="chips">
-      <span class="chip"><i class="devicon-python-plain"></i>Python</span>
-      <span class="chip"><i class="devicon-postgresql-plain"></i>SQL</span>
-      <span class="chip"><i class="devicon-r-plain"></i>R</span>
-      <span class="chip"><i class="devicon-bash-plain"></i>Shell</span>
-      <span class="chip"><i class="devicon-pandas-original"></i>Pandas</span>
-      <span class="chip"><i class="devicon-numpy-original"></i>NumPy</span>
-      <span class="chip"><i class="devicon-scikitlearn-plain"></i>scikit‑learn</span>
-      <span class="chip"><i class="devicon-apachespark-plain"></i>Spark</span>
-      <span class="chip"><i class="devicon-hadoop-plain"></i>Hadoop</span>
-      <span class="chip"><i class="devicon-amazonwebservices-original"></i>AWS</span>
-      <span class="chip"><i class="devicon-tableau-original"></i>Tableau</span>
-      <span class="chip"><i class="devicon-powerbi-plain"></i>Power BI</span>
-      <span class="chip"><i class="devicon-git-plain"></i>Git</span>
-      <span class="chip"><i class="devicon-jupyter-plain"></i>Jupyter</span>
-      <span class="chip"><i class="devicon-vscode-plain"></i>VS Code</span>
+      <span class="chip"><span class="badge"><i class="devicon-python-plain"></i></span>Python</span>
+      <span class="chip"><span class="badge"><i class="devicon-postgresql-plain"></i></span>SQL</span>
+      <span class="chip"><span class="badge"><i class="devicon-r-plain"></i></span>R</span>
+      <span class="chip"><span class="badge"><i class="devicon-bash-plain"></i></span>Shell</span>
+      <span class="chip"><span class="badge"><i class="devicon-pandas-original"></i></span>Pandas</span>
+      <span class="chip"><span class="badge"><i class="devicon-numpy-original"></i></span>NumPy</span>
+      <span class="chip"><span class="badge"><i class="devicon-scikitlearn-plain"></i></span>scikit‑learn</span>
+      <span class="chip"><span class="badge"><i class="devicon-apachespark-plain"></i></span>Spark</span>
+      <span class="chip"><span class="badge"><i class="devicon-hadoop-plain"></i></span>Hadoop</span>
+      <span class="chip"><span class="badge"><i class="devicon-amazonwebservices-original"></i></span>AWS</span>
+      <span class="chip"><span class="badge"><i class="devicon-tableau-original"></i></span>Tableau</span>
+      <span class="chip"><span class="badge"><i class="devicon-powerbi-plain"></i></span>Power BI</span>
+      <span class="chip"><span class="badge"><i class="devicon-docker-plain"></i></span>Docker</span>
+      <span class="chip"><span class="badge"><i class="devicon-kubernetes-plain"></i></span>Kubernetes</span>
+      <span class="chip"><span class="badge"><i class="devicon-apacheairflow-plain"></i></span>Apache Airflow</span>
+      <span class="chip"><span class="badge"><i class="devicon-snowflake-plain"></i></span>Snowflake</span>
+      <span class="chip"><span class="badge"><i class="devicon-git-plain"></i></span>Git</span>
+      <span class="chip"><span class="badge"><i class="devicon-jupyter-plain"></i></span>Jupyter</span>
+      <span class="chip"><span class="badge"><i class="devicon-vscode-plain"></i></span>VS Code</span>
     </div>
   </section>
 
