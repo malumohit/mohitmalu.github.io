@@ -1,2 +1,2 @@
 # mohitmalu.github.io
-website project
+Website
