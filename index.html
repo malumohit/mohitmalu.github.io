@@ -444,98 +444,220 @@
   </section>
 
   <script type="module">
-    // ====== Simple, FREE in-browser AI via WebLLM (no server, no keys) ======
-    // This loads a tiny open-source model in the browser. First run will download weights (one-time, ~20–100MB depending on model).
-    // If the user has reduced-motion, or the model fails to load, we fall back to simple rule-based answers.
-    let engine = null;
-    let loading = false;
-    const systemPrompt = `You are a helpful website guide for Mohit Malu's portfolio. Keep answers short and friendly. If a question asks for links, use these canonical links: GitHub https://github.com/malumohit , LinkedIn https://www.linkedin.com/in/mohit-malu/ , Email mmalu9864@sdsu.edu . If asked about resume, say the button on the homepage downloads it. If asked about projects, point to GitHub profile. If asked about location: San Diego, CA. If you don't know, say you'll defer to Mohit.`;
+/* ====== Chatbot: unified script (free, client-side, with memory) ====== */
 
-    async function ensureEngine(){
-      if(engine || loading) return engine;
-      loading = true;
-      try{
-        const { CreateWebWorkerMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/index.min.js');
-        const worker = new Worker('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/worker.js', { type: 'module' });
-        engine = await CreateWebWorkerMLCEngine(worker, {
-          model: 'Phi-3-mini-4k-instruct-q4f32_1', // small & fast; purely client-side
-          // Alternatives if needed: 'TinyLlama-1.1B-Chat-v1.0-q4f32_1'
-          temperature: 0.6,
-          top_p: 0.95,
-        }, { initProgressCallback: (p)=>{ statusMsg(`Loading AI… ${Math.round(p.progress*100)}%`); } });
-        statusMsg('Ready!');
-      }catch(e){ console.warn('AI load failed, falling back', e); statusMsg('Running in basic mode.'); }
-      finally{ loading = false; }
-      return engine;
+// ---------- UI elements ----------
+const launcher = document.getElementById('chatLauncher');
+const panel    = document.getElementById('chatPanel');
+const closeBtn = document.getElementById('chatClose');
+const clearBtn = document.getElementById('chatClear');
+const stopBtn  = document.getElementById('chatStop');
+const modelSel = document.getElementById('chatModel');
+const bodyEl   = document.getElementById('chatBody');
+const chipsEl  = document.getElementById('promptChips');
+const inputEl  = document.getElementById('chatInput');
+const sendBtn  = document.getElementById('chatSend');
+
+const STORAGE_HTML = 'mohit_chat_history_html_v1';
+const STORAGE_CONV = 'mohit_chat_convo_v1';
+
+// ---------- system prompt (so it doesn’t repeat canned replies) ----------
+const systemPrompt = `
+You are a helpful website guide for Mohit Malu's portfolio.
+Be concise, friendly, and specific. Prefer concrete links only when relevant:
+- GitHub profile: https://github.com/malumohit
+- LinkedIn: https://www.linkedin.com/in/mohit-malu/
+- Email: mmalu9864@sdsu.edu or malumohit24@gmail.com
+- Location: San Diego, CA
+If asked about the resume, mention the homepage "Download Resume" button.
+If unsure, ask a short clarifying question instead of repeating the same answer.
+Avoid repeating identical phrasing across turns.
+`;
+
+// ---------- helpers ----------
+function linkify(txt){
+  return txt.replace(/(https?:\/\/[^\s)]+|www\.[^\s)]+)/g, m => {
+    const u = m.startsWith('http') ? m : 'https://' + m;
+    return `<a href="${u}" target="_blank" rel="noopener">${m}</a>`;
+  });
+}
+function renderMarkdown(txt){
+  // linkify first
+  txt = linkify(txt);
+  // code blocks
+  txt = txt.replace(/```([\s\S]*?)```/g, (m,code)=>`<pre><code>${code.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]||c))}</code></pre>`);
+  // inline code
+  txt = txt.replace(/`([^`]+)`/g,'<code>$1</code>');
+  // bold | italic
+  txt = txt.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  txt = txt.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  return txt;
+}
+
+function saveHistoryHTML(){ try{ localStorage.setItem(STORAGE_HTML, bodyEl.innerHTML); }catch{} }
+function loadHistoryHTML(){ try{ const h = localStorage.getItem(STORAGE_HTML); if(h) bodyEl.innerHTML = h; }catch{} }
+
+function getConvo(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_CONV) || '[]'); } catch { return []; }
+}
+function setConvo(arr){ try{ localStorage.setItem(STORAGE_CONV, JSON.stringify(arr.slice(-10))); } catch{} }
+let convo = getConvo();
+
+function addBubble(text, who='bot'){
+  const div = document.createElement('div');
+  div.className = `bubble ${who}`;
+  div.innerHTML = who === 'bot' ? renderMarkdown(text) : linkify(text);
+  if(who === 'bot'){
+    const b = document.createElement('button');
+    b.className = 'copy-btn';
+    b.textContent = 'Copy';
+    b.addEventListener('click', ()=>{ navigator.clipboard.writeText(div.innerText.trim()); b.textContent='Copied!'; setTimeout(()=>b.textContent='Copy',1200); });
+    div.appendChild(b);
+  }
+  bodyEl.appendChild(div);
+  bodyEl.scrollTop = bodyEl.scrollHeight;
+  saveHistoryHTML();
+}
+function statusMsg(text){
+  const last = bodyEl.lastElementChild;
+  const html = linkify(text);
+  if(last && last.dataset && last.dataset.status){
+    last.innerHTML = html;
+  } else {
+    const d = document.createElement('div');
+    d.className = 'bubble bot';
+    d.dataset.status = '1';
+    d.innerHTML = html;
+    bodyEl.appendChild(d);
+  }
+  bodyEl.scrollTop = bodyEl.scrollHeight;
+  saveHistoryHTML();
+}
+
+// ---------- open/close/clear ----------
+function openChat(){ panel.style.display='flex'; setTimeout(()=>inputEl?.focus(), 50); loadHistoryHTML(); ensureEngine(); }
+function closeChat(){ panel.style.display='none'; }
+function clearHistory(){ bodyEl.innerHTML = '<div class="bubble bot">Cleared. How can I help?</div>'; saveHistoryHTML(); convo = []; setConvo(convo); }
+
+launcher?.addEventListener('click', openChat);
+closeBtn?.addEventListener('click', closeChat);
+clearBtn?.addEventListener('click', clearHistory);
+
+// chips quick send
+chipsEl?.addEventListener('click', (e)=>{
+  if(e.target.classList.contains('chip-btn')){
+    inputEl.value = e.target.textContent;
+    handleSend();
+  }
+});
+
+// ---------- WebLLM load (on-device, free) ----------
+let engine = null, loading = false;
+async function ensureEngine(){
+  // switch model if needed
+  if(engine && window._selectedModel && modelSel && window._selectedModel !== modelSel.value){
+    engine = null;
+  }
+  if(engine || loading) return engine;
+  loading = true;
+  try{
+    const { CreateWebWorkerMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/index.min.js');
+    const worker = new Worker('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/worker.js', { type: 'module' });
+    window._selectedModel = modelSel?.value || 'Phi-3-mini-4k-instruct-q4f32_1';
+    engine = await CreateWebWorkerMLCEngine(worker, {
+      model: window._selectedModel,
+      temperature: 0.6, top_p: 0.95
+    }, { initProgressCallback: (p)=> statusMsg(`Loading AI… ${Math.round(p.progress*100)}%`) });
+    statusMsg('Ready!');
+  }catch(e){
+    console.warn('AI load failed; falling back to basic mode', e);
+    statusMsg('Running in basic mode.');
+  }finally{
+    loading = false;
+  }
+  return engine;
+}
+modelSel?.addEventListener('change', ()=> statusMsg('Switching model…'));
+
+// ---------- askLLM with conversation + streaming + stop ----------
+async function askLLM(prompt){
+  // add user turn
+  convo.push({ role: 'user', content: prompt });
+  setConvo(convo);
+
+  const eng = await ensureEngine();
+
+  // fallback/basic mode if model missing
+  if(!eng){
+    const l = prompt.toLowerCase();
+    if(l.includes('github'))   return 'You can browse everything on my GitHub: https://github.com/malumohit';
+    if(l.includes('linkedin')) return 'Here’s my LinkedIn: https://www.linkedin.com/in/mohit-malu/';
+    if(l.includes('resume'))   return 'Use the “Download Resume” button on the homepage to get the latest PDF.';
+    if(l.includes('contact')||l.includes('email')) return 'You can email me at mmalu9864@sdsu.edu or malumohit24@gmail.com.';
+    if(l.includes('project'))  return 'My projects are listed here: https://github.com/malumohit';
+    return "I'm in basic mode right now. You can ask about projects, resume, or contact info.";
+  }
+
+  const MAX_TURNS = 8;
+  const messages = [{ role: 'system', content: systemPrompt }, ...convo.slice(-MAX_TURNS)];
+
+  let reply = '';
+  let stopFlag = false;
+  const onStop = ()=>{ stopFlag = true; };
+  stopBtn?.addEventListener('click', onStop, { once:true });
+
+  for await (const chunk of eng.chat.completions.create({ messages, stream: true })){
+    if(stopFlag) break;
+    const delta = chunk?.choices?.[0]?.delta?.content;
+    if(!delta) continue;
+    reply += delta;
+
+    if(!addBubble._editing){
+      addBubble._editing = document.createElement('div');
+      addBubble._editing.className = 'bubble bot';
+      const b = document.createElement('button');
+      b.className='copy-btn'; b.textContent='Copy';
+      b.addEventListener('click', ()=>{ navigator.clipboard.writeText(addBubble._editing.innerText.trim()); b.textContent='Copied!'; setTimeout(()=>b.textContent='Copy',1200); });
+      addBubble._editing.appendChild(b);
+      bodyEl.appendChild(addBubble._editing);
     }
+    const btnHTML = addBubble._editing.lastChild.outerHTML;
+    addBubble._editing.innerHTML = renderMarkdown(reply) + btnHTML;
 
-    const launcher = document.getElementById('chatLauncher');
-    const panel = document.getElementById('chatPanel');
-    const closeBtn = document.getElementById('chatClose');
-    const bodyEl = document.getElementById('chatBody');
-    const inputEl = document.getElementById('chatInput');
-    const sendBtn = document.getElementById('chatSend');
+    bodyEl.scrollTop = bodyEl.scrollHeight;
+    saveHistoryHTML();
+  }
 
-    function openChat(){ panel.style.display='flex'; setTimeout(()=>inputEl.focus(), 50); ensureEngine(); }
-    function closeChat(){ panel.style.display='none'; }
-    launcher.addEventListener('click', openChat);
-    closeBtn.addEventListener('click', closeChat);
+  const finalReply = reply.trim() || '…';
+  convo.push({ role: 'assistant', content: finalReply });
+  setConvo(convo);
+  addBubble._editing = null;
+  saveHistoryHTML();
+  return finalReply;
+}
 
-    function addBubble(text, who='bot'){
-      const div = document.createElement('div');
-      div.className = `bubble ${who}`;
-      div.textContent = text;
-      bodyEl.appendChild(div);
-      bodyEl.scrollTop = bodyEl.scrollHeight;
-    }
-    function statusMsg(text){
-      const last = bodyEl.lastElementChild; if(last && last.dataset.status){ last.textContent = text; } else { const d = document.createElement('div'); d.className='bubble bot'; d.dataset.status='1'; d.textContent=text; bodyEl.appendChild(d); }
-      bodyEl.scrollTop = bodyEl.scrollHeight;
-    }
+// ---------- send handlers ----------
+async function handleSend(){
+  const text = (inputEl.value || '').trim();
+  if(!text) return;
+  inputEl.value = '';
+  addBubble(text, 'you');
+  const thinking = document.createElement('div'); thinking.className='bubble bot'; thinking.dataset.status='1'; thinking.textContent='Thinking…'; bodyEl.appendChild(thinking);
+  try{
+    const ans = await askLLM(text);
+    if(thinking.parentNode) thinking.remove();
+    if(!addBubble._editing) addBubble(ans,'bot');
+  }catch(e){
+    if(thinking.parentNode) thinking.remove();
+    addBubble('Sorry, something went wrong.','bot');
+    console.error(e);
+  }
+}
+sendBtn?.addEventListener('click', handleSend);
+inputEl?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }});
 
-    async function askLLM(prompt){
-      const eng = await ensureEngine();
-      if(!eng){
-        // Fallback: minimal, rule-based answers using site context
-        const l = prompt.toLowerCase();
-        if(l.includes('github')) return 'Here’s my GitHub: https://github.com/malumohit';
-        if(l.includes('linkedin')) return 'Connect on LinkedIn: https://www.linkedin.com/in/mohit-malu/';
-        if(l.includes('resume')) return 'Use the “Download Resume” button on the homepage.';
-        if(l.includes('contact')||l.includes('email')) return 'Email me at mmalu9864@sdsu.edu';
-        if(l.includes('project')) return 'Check all projects at my GitHub profile: https://github.com/malumohit';
-        return "I'm in basic mode right now. Try asking about GitHub, LinkedIn, projects, or resume.";
-      }
-      const conv = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt }
-      ];
-      let reply = '';
-      for await (const chunk of eng.chat.completions.create({ messages: conv, stream: true })){
-        if(chunk.choices?.[0]?.delta?.content){
-          reply += chunk.choices[0].delta.content;
-          // live update
-          if(!addBubble._editing){
-            addBubble._editing = document.createElement('div');
-            addBubble._editing.className = 'bubble bot';
-            bodyEl.appendChild(addBubble._editing);
-          }
-          addBubble._editing.textContent = reply;
-          bodyEl.scrollTop = bodyEl.scrollHeight;
-        }
-      }
-      addBubble._editing = null;
-      return reply || '…';
-    }
-
-    async function handleSend(){
-      const text = inputEl.value.trim();
-      if(!text) return; inputEl.value=''; addBubble(text,'you');
-      const thinking = document.createElement('div'); thinking.className='bubble bot'; thinking.dataset.status='1'; thinking.textContent='Thinking…'; bodyEl.appendChild(thinking);
-      try{ const ans = await askLLM(text); if(thinking.parentNode){ thinking.remove(); } if(!addBubble._editing) addBubble(ans,'bot'); }
-      catch(e){ if(thinking.parentNode){ thinking.remove(); } addBubble('Sorry, something went wrong.','bot'); console.error(e); }
-    }
-    sendBtn.addEventListener('click', handleSend);
-    inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }});
-  </script>
+// ---------- auto-open history if you want ----------
+// loadHistoryHTML(); // (kept off by default)
+</script>
 </body>
 </html>
