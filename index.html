@@ -191,7 +191,7 @@
   <!-- About -->
   <section id="about" data-appear>
     <h2 class="section-title"><span class="bar"></span>About Me</h2>
-    <p class="muted">I’m a Data Scientist and a Data Engineer with an MS in MIS (SDSU <img class="logo-sdsu" src="images/sdsu.png" alt="SDSU" />). I’ve worked at the intersection of embedded systems and data—building ETL pipelines, big‑data integrations, and ML for predictive maintenance and anomaly detection. Comfortable across Python, SQL, AWS, Snowflake, Kafka, Spark, Airflow, Tableau, and R, I turn raw controller and sensor data into reliable, decision‑ready insights. I collaborate closely with hardware and project teams to improve product reliability, efficiency, and data quality.</p>
+    <p class="muted">I’m a Data Analyst / Data Engineer with an MS in MIS (SDSU <img class="logo-sdsu" src="images/sdsu.png" alt="SDSU" />). I’ve worked at the intersection of embedded systems and data—building ETL pipelines, big‑data integrations, and ML for predictive maintenance and anomaly detection. Comfortable across Python, SQL, AWS, Snowflake, Kafka, Spark, Airflow, Tableau, and R, I turn raw controller and sensor data into reliable, decision‑ready insights. I collaborate closely with hardware and project teams to improve product reliability, efficiency, and data quality.</p>
   </section>
 
   <!-- Skills -->
@@ -231,28 +231,43 @@
   </section>
 
   <!-- Projects -->
-  <section id="projects" data-appear data-aos="fade-up">
-    <h2 class="section-title"><span class="bar"></span>Highlighted Projects</h2>
+  <section id="projects" data-appear>
+    <h2 class="section-title"><span class="bar"></span>Projects</h2>
     <div class="grid">
-      <article class="card">
-        <div class="tag">Big Data • ML</div>
-        <h3>🧠 Mental Health Attitude Across Geography</h3>
-        <p>Distributed pipeline analyzing geographic + workplace factors in mental health. Feature engineered regional signals; models explained variance across cohorts. 🥉 in course competition.</p>
-        <a href="https://github.com/malumohit/mental-health-geo" target="_blank" rel="noopener">View Project →</a>
+      <!-- Card 1: Local AI Agent Calculator -->
+      <article class="card" data-aos="fade-up">
+        <h3>Local AI Agent Calculator</h3>
+        <p class="muted">A lightweight local agent running with Ollama + Llama 3.1. Adds a reasoning loop, tool calls (calculator, web_search), and simple RAG on your own files.</p>
+        <div class="chips">
+          <span class="chip"><i class="devicon-python-plain"></i>Python</span>
+          <span class="chip"><i class="devicon-amazonwebservices-original"></i>LLM/Ollama</span>
+          <span class="chip"><i class="devicon-apacheairflow-plain"></i>RAG</span>
+        </div>
+        <a href="https://github.com/malumohit/Local-AI-agent-calculator" target="_blank" rel="noopener" class="btn secondary">View Project →</a>
       </article>
 
-      <article class="card">
-        <div class="tag">Time‑Series • AWS</div>
-        <h3>⚙️ Predictive Maintenance (PI Controller Logs)</h3>
-        <p>Built predictive maintenance model on Honeywell controller logs. Ingested via S3; surfaced real‑time fault dashboards in Tableau.</p>
-        <a href="https://github.com/malumohit/predictive-maintenance" target="_blank" rel="noopener">View Project →</a>
+      <!-- Card 2: Showcase Projects -->
+      <article class="card" data-aos="fade-up" data-aos-delay="80">
+        <h3>Showcase Projects</h3>
+        <p class="muted">A collection of small ML/Analytics/SQL projects demonstrating techniques across preprocessing, modeling, and visualization.</p>
+        <div class="chips">
+          <span class="chip"><i class="devicon-python-plain"></i>Python</span>
+          <span class="chip"><i class="devicon-tableau-original"></i>Dashboards</span>
+          <span class="chip"><i class="devicon-postgresql-plain"></i>SQL</span>
+        </div>
+        <a href="https://github.com/malumohit/showcase-projects" target="_blank" rel="noopener" class="btn secondary">View Project →</a>
       </article>
 
-      <article class="card">
-        <div class="tag">ETL • Scraping</div>
-        <h3>🎬 Movie Data Scraper</h3>
-        <p>Python scraper extracting top‑movie data with persistence to CSV + SQLite. Demonstrates clean ETL patterns and wrangling.</p>
-        <a href="https://github.com/malumohit/movie-scraper" target="_blank" rel="noopener">View Project →</a>
+      <!-- Card 3: Portfolio Website -->
+      <article class="card" data-aos="fade-up" data-aos-delay="120">
+        <h3>Portfolio Website</h3>
+        <p class="muted">This site: custom animated UI + AOS, particles, dark/light mode, client‑side AI chatbot, and optional Jekyll pages.</p>
+        <div class="chips">
+          <span class="chip"><i class="devicon-html5-plain"></i>HTML</span>
+          <span class="chip"><i class="devicon-css3-plain"></i>CSS</span>
+          <span class="chip"><i class="devicon-javascript-plain"></i>JavaScript</span>
+        </div>
+        <a href="https://github.com/malumohit/mohitmalu.github.io" target="_blank" rel="noopener" class="btn secondary">View Project →</a>
       </article>
     </div>
   </section>
