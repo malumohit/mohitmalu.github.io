@@ -444,28 +444,23 @@
   </section>
 
   <script type="module">
-/* ====== Chatbot: unified script (free, client-side, with memory) ====== */
+  // ====== Hybrid Chatbot Engine: WebLLM -> Transformers.js -> FAQ ======
+  // Works across more browsers: tries WebGPU (WebLLM). If unavailable, falls back to
+  // CPU/WASM via transformers.js (TinyLlama). Finally uses a small FAQ.
 
-// ---------- UI elements ----------
-const launcher = document.getElementById('chatLauncher');
-const panel    = document.getElementById('chatPanel');
-const closeBtn = document.getElementById('chatClose');
-const clearBtn = document.getElementById('chatClear');
-const stopBtn  = document.getElementById('chatStop');
-const modelSel = document.getElementById('chatModel');
-const bodyEl   = document.getElementById('chatBody');
-const chipsEl  = document.getElementById('promptChips');
-const inputEl  = document.getElementById('chatInput');
-const sendBtn  = document.getElementById('chatSend');
+  // ---------- Grab UI ----------
+  const launcher = document.getElementById('chatLauncher');
+  const panel    = document.getElementById('chatPanel');
+  const closeBtn = document.getElementById('chatClose');
+  const bodyEl   = document.getElementById('chatBody');
+  const inputEl  = document.getElementById('chatInput');
+  const sendBtn  = document.getElementById('chatSend');
 
-const STORAGE_HTML = 'mohit_chat_history_html_v1';
-const STORAGE_CONV = 'mohit_chat_convo_v1';
-
-// ---------- system prompt (so it doesn’t repeat canned replies) ----------
-const systemPrompt = `
+  // ---------- Prompt & small helpers ----------
+  const systemPrompt = `
 You are a helpful website guide for Mohit Malu's portfolio.
 Be concise, friendly, and specific. Prefer concrete links only when relevant:
-- GitHub profile: https://github.com/malumohit
+- GitHub: https://github.com/malumohit
 - LinkedIn: https://www.linkedin.com/in/mohit-malu/
 - Email: mmalu9864@sdsu.edu or malumohit24@gmail.com
 - Location: San Diego, CA
@@ -474,121 +469,112 @@ If unsure, ask a short clarifying question instead of repeating the same answer.
 Avoid repeating identical phrasing across turns.
 `;
 
-// ---------- helpers ----------
-function linkify(txt){
-  return txt.replace(/(https?:\/\/[^\s)]+|www\.[^\s)]+)/g, m => {
-    const u = m.startsWith('http') ? m : 'https://' + m;
-    return `<a href="${u}" target="_blank" rel="noopener">${m}</a>`;
-  });
-}
-function renderMarkdown(txt){
-  // linkify first
-  txt = linkify(txt);
-  // code blocks
-  txt = txt.replace(/```([\s\S]*?)```/g, (m,code)=>`<pre><code>${code.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]||c))}</code></pre>`);
-  // inline code
-  txt = txt.replace(/`([^`]+)`/g,'<code>$1</code>');
-  // bold | italic
-  txt = txt.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-  txt = txt.replace(/\*([^*]+)\*/g,'<em>$1</em>');
-  return txt;
-}
-
-function saveHistoryHTML(){ try{ localStorage.setItem(STORAGE_HTML, bodyEl.innerHTML); }catch{} }
-function loadHistoryHTML(){ try{ const h = localStorage.getItem(STORAGE_HTML); if(h) bodyEl.innerHTML = h; }catch{} }
-
-function getConvo(){
-  try { return JSON.parse(localStorage.getItem(STORAGE_CONV) || '[]'); } catch { return []; }
-}
-function setConvo(arr){ try{ localStorage.setItem(STORAGE_CONV, JSON.stringify(arr.slice(-10))); } catch{} }
-let convo = getConvo();
-
-function addBubble(text, who='bot'){
-  const div = document.createElement('div');
-  div.className = `bubble ${who}`;
-  div.innerHTML = who === 'bot' ? renderMarkdown(text) : linkify(text);
-  if(who === 'bot'){
-    const b = document.createElement('button');
-    b.className = 'copy-btn';
-    b.textContent = 'Copy';
-    b.addEventListener('click', ()=>{ navigator.clipboard.writeText(div.innerText.trim()); b.textContent='Copied!'; setTimeout(()=>b.textContent='Copy',1200); });
-    div.appendChild(b);
+  function addBubble(text, who='bot'){
+    const div = document.createElement('div');
+    div.className = `bubble ${who}`;
+    div.textContent = text;
+    bodyEl.appendChild(div);
+    bodyEl.scrollTop = bodyEl.scrollHeight;
   }
-  bodyEl.appendChild(div);
-  bodyEl.scrollTop = bodyEl.scrollHeight;
-  saveHistoryHTML();
-}
-function statusMsg(text){
-  const last = bodyEl.lastElementChild;
-  const html = linkify(text);
-  if(last && last.dataset && last.dataset.status){
-    last.innerHTML = html;
-  } else {
-    const d = document.createElement('div');
-    d.className = 'bubble bot';
-    d.dataset.status = '1';
-    d.innerHTML = html;
-    bodyEl.appendChild(d);
+  function statusMsg(text){
+    const last = bodyEl.lastElementChild;
+    if(last && last.dataset.status){ last.textContent = text; }
+    else { const d = document.createElement('div'); d.className='bubble bot'; d.dataset.status='1'; d.textContent=text; bodyEl.appendChild(d);} 
+    bodyEl.scrollTop = bodyEl.scrollHeight;
   }
-  bodyEl.scrollTop = bodyEl.scrollHeight;
-  saveHistoryHTML();
-}
 
-// ---------- open/close/clear ----------
-function openChat(){ panel.style.display='flex'; setTimeout(()=>inputEl?.focus(), 50); loadHistoryHTML(); ensureEngine(); }
-function closeChat(){ panel.style.display='none'; }
-function clearHistory(){ bodyEl.innerHTML = '<div class="bubble bot">Cleared. How can I help?</div>'; saveHistoryHTML(); convo = []; setConvo(convo); }
+  // ---------- Conversation memory (short) ----------
+  const MEM_KEY = 'mohit_chat_convo_v2';
+  let convo = [];
+  try{ convo = JSON.parse(localStorage.getItem(MEM_KEY) || '[]'); }catch{}
+  function saveConvo(){ try{ localStorage.setItem(MEM_KEY, JSON.stringify(convo.slice(-10))); }catch{} }
 
-launcher?.addEventListener('click', openChat);
-closeBtn?.addEventListener('click', closeChat);
-clearBtn?.addEventListener('click', clearHistory);
+  // ---------- Engines ----------
+  let webllm = null;      // WebGPU engine
+  let hfPipe = null;      // Transformers.js pipeline (CPU/WASM)
+  let loading = false;
 
-// chips quick send
-chipsEl?.addEventListener('click', (e)=>{
-  if(e.target.classList.contains('chip-btn')){
-    inputEl.value = e.target.textContent;
-    handleSend();
+  async function tryWebLLM(){
+    if(webllm || loading) return webllm;
+    loading = true;
+    try{
+      // Quick feature sniff: if no WebGPU, skip to transformers.js
+      if(!('gpu' in navigator)) throw new Error('No WebGPU');
+      const { CreateWebWorkerMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/index.min.js');
+      const worker = new Worker('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/worker.js', { type: 'module' });
+      statusMsg('Loading on‑device AI (WebGPU)…');
+      webllm = await CreateWebWorkerMLCEngine(worker, {
+        model: 'Phi-3-mini-4k-instruct-q4f32_1',
+        temperature: 0.6, top_p: 0.95
+      }, { initProgressCallback: (p)=> statusMsg(`Loading AI… ${Math.round(p.progress*100)}%`) });
+      statusMsg('AI ready (WebGPU).');
+    }catch(e){
+      console.warn('WebLLM unavailable:', e);
+      webllm = null;
+    }finally{
+      loading = false;
+    }
+    return webllm;
   }
-});
 
-// ---------- WebLLM load (on-device, free) ----------
-let engine = null, loading = false;
-async function ensureEngine(){
-  // switch model if needed
-  if(engine && window._selectedModel && modelSel && window._selectedModel !== modelSel.value){
-    engine = null;
+  async function tryTransformers(){
+    if(hfPipe || loading) return hfPipe;
+    loading = true;
+    try{
+      statusMsg('Loading on‑device AI (CPU)…');
+      const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+      // Tiny instruct model that runs via WASM on most browsers
+      hfPipe = await pipeline('text-generation', 'Xenova/TinyLlama-1.1B-Chat-v1.0');
+      statusMsg('AI ready (CPU/WASM).');
+    }catch(e){
+      console.warn('Transformers.js unavailable:', e);
+      hfPipe = null;
+    }finally{ loading = false; }
+    return hfPipe;
   }
-  if(engine || loading) return engine;
-  loading = true;
-  try{
-    const { CreateWebWorkerMLCEngine } = await import('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/index.min.js');
-    const worker = new Worker('https://unpkg.com/@mlc-ai/web-llm@0.2.53/dist/worker.js', { type: 'module' });
-    window._selectedModel = modelSel?.value || 'Phi-3-mini-4k-instruct-q4f32_1';
-    engine = await CreateWebWorkerMLCEngine(worker, {
-      model: window._selectedModel,
-      temperature: 0.6, top_p: 0.95
-    }, { initProgressCallback: (p)=> statusMsg(`Loading AI… ${Math.round(p.progress*100)}%`) });
-    statusMsg('Ready!');
-  }catch(e){
-    console.warn('AI load failed; falling back to basic mode', e);
-    statusMsg('Running in basic mode.');
-  }finally{
-    loading = false;
-  }
-  return engine;
-}
-modelSel?.addEventListener('change', ()=> statusMsg('Switching model…'));
 
-// ---------- askLLM with conversation + streaming + stop ----------
-async function askLLM(prompt){
-  // add user turn
-  convo.push({ role: 'user', content: prompt });
-  setConvo(convo);
+  // ---------- Ask with hybrid fallback ----------
+  async function ask(prompt){
+    convo.push({ role:'user', content: prompt });
+    saveConvo();
 
-  const eng = await ensureEngine();
+    // 1) Try WebLLM
+    const w = await tryWebLLM();
+    if(w){
+      let reply = '';
+      const msgs = [{ role:'system', content: systemPrompt }, ...convo.slice(-8)];
+      for await (const chunk of w.chat.completions.create({ messages: msgs, stream: true })){
+        const delta = chunk?.choices?.[0]?.delta?.content;
+        if(delta){
+          reply += delta;
+          if(!addBubble._editing){ addBubble._editing = document.createElement('div'); addBubble._editing.className='bubble bot'; bodyEl.appendChild(addBubble._editing); }
+          addBubble._editing.textContent = reply;
+          bodyEl.scrollTop = bodyEl.scrollHeight;
+        }
+      }
+      addBubble._editing = null;
+      reply = reply.trim() || '…';
+      convo.push({ role:'assistant', content: reply }); saveConvo();
+      return reply;
+    }
 
-  // fallback/basic mode if model missing
-  if(!eng){
+    // 2) Try Transformers.js (works without WebGPU)
+    const p = await tryTransformers();
+    if(p){
+      const sys = systemPrompt.trim();
+      const history = convo.slice(-8).map(m=> `${m.role.toUpperCase()}: ${m.content}`).join('
+');
+      const full = `${sys}
+
+${history}
+ASSISTANT:`;
+      const out = await p(full, { max_new_tokens: 200, temperature: 0.7, top_p: 0.95, repetition_penalty: 1.05 });
+      const text = (out?.[0]?.generated_text || '').split('ASSISTANT:').pop().trim() || '…';
+      convo.push({ role:'assistant', content: text }); saveConvo();
+      return text;
+    }
+
+    // 3) Final basic fallback (FAQ/links)
     const l = prompt.toLowerCase();
     if(l.includes('github'))   return 'You can browse everything on my GitHub: https://github.com/malumohit';
     if(l.includes('linkedin')) return 'Here’s my LinkedIn: https://www.linkedin.com/in/mohit-malu/';
@@ -598,66 +584,21 @@ async function askLLM(prompt){
     return "I'm in basic mode right now. You can ask about projects, resume, or contact info.";
   }
 
-  const MAX_TURNS = 8;
-  const messages = [{ role: 'system', content: systemPrompt }, ...convo.slice(-MAX_TURNS)];
+  // ---------- Wire UI ----------
+  function openChat(){ panel.style.display='flex'; setTimeout(()=>inputEl?.focus(), 50); }
+  function closeChat(){ panel.style.display='none'; }
+  launcher?.addEventListener('click', openChat);
+  closeBtn?.addEventListener('click', closeChat);
 
-  let reply = '';
-  let stopFlag = false;
-  const onStop = ()=>{ stopFlag = true; };
-  stopBtn?.addEventListener('click', onStop, { once:true });
-
-  for await (const chunk of eng.chat.completions.create({ messages, stream: true })){
-    if(stopFlag) break;
-    const delta = chunk?.choices?.[0]?.delta?.content;
-    if(!delta) continue;
-    reply += delta;
-
-    if(!addBubble._editing){
-      addBubble._editing = document.createElement('div');
-      addBubble._editing.className = 'bubble bot';
-      const b = document.createElement('button');
-      b.className='copy-btn'; b.textContent='Copy';
-      b.addEventListener('click', ()=>{ navigator.clipboard.writeText(addBubble._editing.innerText.trim()); b.textContent='Copied!'; setTimeout(()=>b.textContent='Copy',1200); });
-      addBubble._editing.appendChild(b);
-      bodyEl.appendChild(addBubble._editing);
-    }
-    const btnHTML = addBubble._editing.lastChild.outerHTML;
-    addBubble._editing.innerHTML = renderMarkdown(reply) + btnHTML;
-
-    bodyEl.scrollTop = bodyEl.scrollHeight;
-    saveHistoryHTML();
+  async function handleSend(){
+    const text = (inputEl.value || '').trim();
+    if(!text) return; inputEl.value=''; addBubble(text,'you');
+    const thinking = document.createElement('div'); thinking.className='bubble bot'; thinking.dataset.status='1'; thinking.textContent='Thinking…'; bodyEl.appendChild(thinking);
+    try{ const ans = await ask(text); if(thinking.parentNode) thinking.remove(); addBubble(ans,'bot'); }
+    catch(e){ if(thinking.parentNode) thinking.remove(); addBubble('Sorry, something went wrong.','bot'); console.error(e); }
   }
-
-  const finalReply = reply.trim() || '…';
-  convo.push({ role: 'assistant', content: finalReply });
-  setConvo(convo);
-  addBubble._editing = null;
-  saveHistoryHTML();
-  return finalReply;
-}
-
-// ---------- send handlers ----------
-async function handleSend(){
-  const text = (inputEl.value || '').trim();
-  if(!text) return;
-  inputEl.value = '';
-  addBubble(text, 'you');
-  const thinking = document.createElement('div'); thinking.className='bubble bot'; thinking.dataset.status='1'; thinking.textContent='Thinking…'; bodyEl.appendChild(thinking);
-  try{
-    const ans = await askLLM(text);
-    if(thinking.parentNode) thinking.remove();
-    if(!addBubble._editing) addBubble(ans,'bot');
-  }catch(e){
-    if(thinking.parentNode) thinking.remove();
-    addBubble('Sorry, something went wrong.','bot');
-    console.error(e);
-  }
-}
-sendBtn?.addEventListener('click', handleSend);
-inputEl?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }});
-
-// ---------- auto-open history if you want ----------
-// loadHistoryHTML(); // (kept off by default)
+  sendBtn?.addEventListener('click', handleSend);
+  inputEl?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }});
 </script>
 </body>
 </html>
